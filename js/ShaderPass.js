@@ -18,7 +18,7 @@ THREE.ShaderPass = function ( shader, textureID ) {
 
 		this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
-		this.material = new THREE.ShaderMaterial( {
+		this.material = new THREE.RawShaderMaterial( {
 
 			defines: shader.defines || {},
 			uniforms: this.uniforms,
