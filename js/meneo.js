@@ -5,7 +5,7 @@ Ticker
 */
 
 
-class t
+class _ticker
 {
     constructor()
     {
@@ -60,7 +60,7 @@ class t
 
 }
 
-const ticker = new t();
+const ticker = new _ticker();
 
 
 
