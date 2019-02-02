@@ -515,7 +515,6 @@ class meneo
 
     reset()
     {
-        //reset start deltas, time and progress
         //reseteamos tiempos y progreso
         this._currentDelta = 0;
         this._prevDelta = 0;
