@@ -13,12 +13,12 @@ class _ticker
         this._meneos = [];
 
         //requestAnimationFrame variable
-        this._raf = undefined;
+        this._raf = 0;
     }
 
     _run()
     {
-        //call requestAnimationFrame with a bound function and store it for cancelation
+        //llamamos al requestAnimationFrame con una función
         this._raf = requestAnimationFrame((time) =>
         {
             //numero de meneos
@@ -45,7 +45,7 @@ class _ticker
     {
         this._meneos.push(meneo);
         
-        ///if the ticker is not running make it run
+        //si el ticker no está activo lo hacemos correr
         if(!this._raf)
             this._run();
     }
@@ -298,61 +298,61 @@ class meneo
 {
     constructor(els, duration, props, options, delay)
     {
-        //make sure props and options are objects when a false/null/undefined value is passed
+        //nos aseguramos de que props y options sean objetos
         props = props || {};
         options = options || {};
 
-        //paused state
+        //estado pausado
         this._paused = options.paused || false;
 
-        //start deltas, times and progress vars
+        //deltas, tiempos y progreso
         this._currentDelta = 0;
         this._prevDelta = 0;
         this._startTime = 0;
         this._progress = 0;
 
-        //desired decimal precision
+        //precision decimal deseada
         this._precision = options.precision || 4;
 
-        //duration (stored in miliseconds)
+        //duración en milisegundos
         this._duration = duration * 1000;
 
-        //delay (stored in miliseconds)
+        //delay en milisegundos
         this._delay = delay * 1000;
 
-        //ease with a default
+        //ease con un default
         this._ease = options.ease ? eases[options.ease] : eases['Power3.inOut'];
         
-        //hooks function
+        //hooks
         this._onComplete = options.onComplete || noop;
 
-        //create elements nodelist / array
+        //aceptamos un nodelist o array de elementos
         const elements = (is.nodeList(els) || is.array(els)) ? els : [els];
 
-        //get the properties keys
+        //cogemos las keys de las propiedades
         const properties = Object.keys(props);
 
-        //create elements array
+        //creamos el array donde guardaremos los elementos, sus propiedades a animar, etc
         this._els = [];
 
-        //loop through the els
+        //iteramos los elementos
         for(let i = 0; i < elements.length; i++)
         {
-            //create the object of the element
+            //creamos un objeto para cada elemento
             const elObj = { el: elements[i], properties: [] };
 
-            //loop through the properties
+            //iteramos las propiedades a animar del elemento
             for(let j = 0; j < properties.length; j++)
             {
-                //create the object of the property
+                //creamos un objeto por cada propiedad
                 const propObj = { name: properties[j] };
 
-                //detect tween type
+                //detectamos si es un transform
                 if(validTransforms.includes(propObj.name))
                 {
                     propObj.type = tweenTypes.TRANSFORM;
 
-                    //create transform cache if it doesn't exist
+                    //creamos un transform cache en caso de que no exista
                     if(!elObj.el._transformCache)
                         elObj.el._transformCache = {};
                 }
@@ -361,20 +361,20 @@ class meneo
                     propObj.type = tweenTypes.CSS;
                 }
 
-                //save from, to and unit values
+                //guardamos from, to y la unidad de la animación
                 propObj.from = props[propObj.name][0];
                 propObj.to = props[propObj.name][1];
                 propObj.unit = props[propObj.name][2];
 
-                //save propObj
+                //guardamos la propiedad a animar
                 elObj.properties.push(propObj);
             }
 
-            //save the el and its properties
+            //guardamos el elemento a animar
             this._els.push(elObj);
         }
 
-        //play it?
+        //lo reproducimos automáticamente?
         if(!this._paused)
         {
             this._paused = true;
@@ -384,26 +384,27 @@ class meneo
 
     _tick(time)
     {
+        //si tiene el tiempo de comienzo se lo guardamos
         if(!this._startTime)
             this._startTime = time;
 
-        //calc delta
+        //calculamos el delta time
         const delta = this._currentDelta + time - this._startTime;
 
-        //save previous delta in case the user pauses() and then plays()
+        //lo guardamos en caso de usar pause() y luego play()
         this._prevDelta = delta;
 
-        //only do something after the delay
+        //si el tiempo pasado el inferior al delay no hacemos nada
         if(delta < this._delay)
             return;
 
-        //calculate tween progress
+        //calculamos el progreso del meneo
         this._progress = Math.max(0, Math.min(1, (delta - this._delay) / this._duration));
 
-        //set tween in-between state
-        this._tweenProgress();
+        //llamamos a la función que actualiza los elementos con respecto al progreso
+        this._updateEls();
 
-        //if tween is finished, pause it
+        //si el meneo ha terminado lo paramos y llamamos a un hook de ejemplo 
         if(delta >= (this._delay + this._duration))
         {
             this.pause();
@@ -411,27 +412,29 @@ class meneo
         }
     }
 
-    _tweenProgress()
+    _updateEls()
     {
-        //get eased value of progress
+        //obtenemos el valor del ease para el progreso actual
         const eased = this._ease(this._progress);
-
-        //loop the els
+    
+        //recorremos los elementos
         for(let i = 0; i < this._els.length; i++)
         {
-            //transforms array
+            //creamos un array de transforms
             const transforms = [];
-
-            //loop the properties
+    
+            //recorremos las propiedades
             for(let j = 0; j < this._els[i].properties.length; j++)
             {
-                //get property data
+                //cogemos los datos
                 const data = this._els[i].properties[j];
-
-                //get the lerped value between from and to values and round it to the desired precision
+    
+                //obtenemos le valor interpolado entre from y to con la función lerp
+                //y nos quedamos con los decimales deseados
                 const val = round(lerp(data.from, data.to, eased), this._precision);
-
-                //set the values
+    
+                //guardamos el valor en el array de transforms o se 
+                //lo ponemos directamente en caso de no ser un transform
                 switch(data.type)
                 {
                     case tweenTypes.TRANSFORM:
@@ -442,33 +445,34 @@ class meneo
                         break;
                 }
             }
-
-            //if there are no transforms, move to the next el
+    
+            //si no hay transforms pasamos al siguiente elemento
             if(transforms.length === 0)
                 continue;
-
-            //copy element transform cache
+    
+            //cogemos la caché de transforms del elemento
             const cache = Object.assign({}, this._els[i].el._transformCache);
-
-            //overwrite it with the new values
+    
+            //la sobreescribimos con los nuevos transforms
             for(let j = 0; j < transforms.length; j++)
                 cache[transforms[j][0]] = transforms[j][1];
-
-            //build transform string
+    
+            //iniciamos el string de transforms
             let transformString = '';
-
-            //IMPORTANT: loop the valid transforms so the string is in the correct order
+    
+            //IMPORTANTE: recorremos los posibles transforms en un orden determinado para
+            //construir la cadena de transforms
             for(let j = 0; j < validTransforms.length; j++)
             {
-                //if it exists in the cache
+                //si existe en la caché lo ponemos
                 if(cache[validTransforms[j]])
                     transformString += validTransforms[j] + '(' + cache[validTransforms[j]] + ') ';
             }
-
-            //save element cache
+    
+            //sobreescribimos la caché
             this._els[i].el._transformCache = cache;
-
-            //set transform string
+    
+            //ponemos al elemento su transform string
             this._els[i].el.style.transform = transformString;
         }
     }
@@ -478,20 +482,20 @@ class meneo
         if(!this._paused)
             return this;
 
-        //set flag
+        //ponemos estado
         this._paused = false;
 
-        //set start time
+        //reseteamos tiempo de comienzo
         this._startTime = 0;
 
-        //set current delta as the previous delta in case
-        //the tween was paused and now restarted again
+        //asignamos prevDelta a currentDelta, esto es necesario
+        //por si pausamos el meneo y luego lo queremos seguir
+        //reproduciendo desde el punto que lo dejamos
         this._currentDelta = this._prevDelta;
 
-        //add it to the ticker
+        //añadimos el meneo al ticker
         ticker._add(this);
 
-        //make this chainable
         return this;
     }
 
@@ -500,25 +504,24 @@ class meneo
         if(this._paused)
             return this;
 
-        //remove it from the ticker
+        //quitamos el meneo del ticker
         ticker._remove(this);
 
-        //set flag
+        //ponemos estado
         this._paused = true;
 
-        //make this chainable
         return this;
     }
 
     reset()
     {
         //reset start deltas, time and progress
+        //reseteamos tiempos y progreso
         this._currentDelta = 0;
         this._prevDelta = 0;
         this._startTime = 0;
         this._progress = 0;
 
-        //make this chainable
         return this;
     }
 
