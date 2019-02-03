@@ -312,13 +312,13 @@ class meneo
         this._progress = 0;
 
         //precision decimal deseada
-        this._precision = options.precision || 4;
+        this._precision = Math.max(0, options.precision || 4);
 
         //duración en milisegundos
-        this._duration = duration * 1000;
+        this._duration = Math.max(0, duration || 0) * 1000;
 
         //delay en milisegundos
-        this._delay = delay * 1000;
+        this._delay =  Math.max(0, delay || 0) * 1000;
 
         //ease con un default
         this._ease = options.ease ? eases[options.ease] : eases['Power3.inOut'];
@@ -399,8 +399,8 @@ class meneo
             return;
 
         //calculamos el progreso del meneo
-        this._progress = Math.max(0, Math.min(1, (delta - this._delay) / this._duration));
-
+        this._progress = this._duration === 0 ? 1 : Math.max(0, Math.min(1, (delta - this._delay) / this._duration));
+        
         //llamamos a la función que actualiza los elementos con respecto al progreso
         this._updateEls();
 
