@@ -324,6 +324,7 @@ class meneo
         this._ease = options.ease ? eases[options.ease] : eases['Power3.inOut'];
         
         //hooks
+        this._onUpdate = options.onUpdate || noop;
         this._onComplete = options.onComplete || noop;
 
         //aceptamos un nodelist o array de elementos
@@ -403,6 +404,9 @@ class meneo
         
         //llamamos a la función que actualiza los elementos con respecto al progreso
         this._updateEls();
+
+        //llamamos al hook
+        this._onUpdate();
 
         //si el meneo ha terminado lo paramos y llamamos a un hook de ejemplo 
         if(delta >= (this._delay + this._duration))
